@@ -289,14 +289,16 @@ namespace RainbowMage.OverlayPlugin
                             // Wrap FFXIV plugin related initialization in try/catch to allow OP to work when FFXIV plugin isn't present
                             try
                             {
-                                // Initialize the parser in the second phase since it needs the FFXIV plugin.
-                                // If OverlayPlugin is placed above the FFXIV plugin, it won't be available in the first
-                                // phase but it'll be loaded by the time we enter the second phase.
-                                _container.Register(new FFXIVRepository(_container));
-                                _container.Register(new NetworkParser(_container));
-                                _container.Register(new TriggIntegration(_container));
-                                _container.Register(new FFXIVCustomLogLines(_container));
-                                _container.Register(new MemoryProcessors.FFXIVClientStructs.Data(_container));
+                                await Task.Run(() =>
+                                {
+                                    // Initialize the parser in the second phase since it needs the FFXIV plugin.
+                                    // If OverlayPlugin is placed above the FFXIV plugin, it won't be available in the first
+                                    // phase but it'll be loaded by the time we enter the second phase.
+                                    _container.Register(new FFXIVRepository(_container));
+                                    _container.Register(new NetworkParser(_container));
+                                    _container.Register(new TriggIntegration(_container));
+                                    _container.Register(new FFXIVCustomLogLines(_container));
+                                    _container.Register(new MemoryProcessors.FFXIVClientStructs.Data(_container));
 
                                     // Register FFXIV memory reading subcomponents.
                                     // Must be done before loading addons.
@@ -317,6 +319,7 @@ namespace RainbowMage.OverlayPlugin
                                     _container.Register<IJobGaugeMemory, JobGaugeMemoryManager>();
 
                                     _container.Register(new OverlayPluginLogLines(_container));
+                                });
                             }
                             catch (Exception ex)
                             {

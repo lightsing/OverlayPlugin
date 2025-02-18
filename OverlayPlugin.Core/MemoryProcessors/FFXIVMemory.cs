@@ -29,6 +29,10 @@ namespace RainbowMage.OverlayPlugin.MemoryProcessors
         private readonly ReaderWriterLockSlim _processLock = new ReaderWriterLockSlim();
 
         private bool hasDisposed;
+        // The "international" version always uses the most recent.
+        private static Version globalVersion = new Version(99, 0);
+        private static Version cnVersion = new Version(7, 1);
+        private static Version koVersion = new Version(7, 0, 5);
 
         public FFXIVMemory(TinyIoCContainer container)
         {
@@ -166,11 +170,10 @@ namespace RainbowMage.OverlayPlugin.MemoryProcessors
             }
         }
 
-        public unsafe static string GetStringFromBytes(byte* source, int size)
+        public unsafe static string GetStringFromBytes(byte* source, int size, int realSize = 0)
         {
             var bytes = new byte[size];
             Marshal.Copy((IntPtr)source, bytes, 0, size);
-            var realSize = 0;
             for (var i = 0; i < size; i++)
             {
                 if (bytes[i] != 0)
