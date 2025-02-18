@@ -7,7 +7,6 @@ using System.Net.Http;
 using System.Reflection;
 using System.Runtime.Serialization;
 using System.Threading;
-using System.Threading.Tasks;
 using Advanced_Combat_Tracker;
 
 namespace RainbowMage.OverlayPlugin.Updater

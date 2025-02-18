@@ -70,16 +70,54 @@ namespace RainbowMage.OverlayPlugin.NetworkProcessors
         {
             get
             {
-                OpcodeConfigEntry entry;
-                if (opcodes.TryGetValue(name, out entry))
+                var version = repository.GetGameVersion();
+                if (version == null || version == "")
                 {
-                    return entry;
+                    LogException($"Could not detect game version from FFXIV_ACT_Plugin, defaulting to latest version for region {machinaRegion}");
+
+                    var possibleVersions = new List<string>();
+                    if (opcodesFile != null && opcodesFile.ContainsKey(machinaRegion))
+                    {
+                        foreach (var key in opcodesFile[machinaRegion].Keys)
+                            possibleVersions.Add(key);
+                    }
+
+                    if (opcodesConfig != null && opcodesConfig.ContainsKey(machinaRegion))
+                    {
+                        foreach (var key in opcodesConfig[machinaRegion].Keys)
+                            possibleVersions.Add(key);
+                    }
+                    possibleVersions.Sort();
+
+                    if (possibleVersions.Count > 0)
+                    {
+                        version = possibleVersions[possibleVersions.Count - 1];
+                        LogException($"Detected most recent version for {machinaRegion} = {version}");
+                    }
+                    else
+                    {
+                        LogException($"Could not determine latest version for region {machinaRegion}");
+                        return null;
+                    }
                 }
-                else
+
+                var opcode = GetOpcode(name, opcodesConfig, version, "config", machinaRegion);
+                if (opcode == null)
                 {
-                    logger.LogError("Unable to resolve opcode config for " + name);
-                    return null;
+                    opcode = GetOpcode(name, opcodesFile, version, "file", machinaRegion);
+
+                    // Try once to get this remotely, but only if this opcode or version is missing.
+                    // TODO: we could consider getting this once always too, but for now
+                    // if we ever have an incorrect (but present) opcode, another release is required.
+                    if (opcode == null && !haveAttemptedOpcodeDownload)
+                    {
+                        haveAttemptedOpcodeDownload = true;
+                        SaveRemoteOpcodesToConfig();
+                        return GetOpcode(name, opcodesConfig, version, "config", machinaRegion);
+                    }
                 }
+
+                return opcode;
             }
         }
     }
